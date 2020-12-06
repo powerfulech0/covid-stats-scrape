@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npx babel-node index.js"
+    "dev": "npx babel-node index.js",
+    "build": "babel index.js -d dist",
+    "start": "yarn install && yarn build && node dist/index.js"
   },
   "repository": "git+https://github.com/powerfulech0/covid-stats-scrape.git",
   "author": "Greg Rearden <gregoryrearden@gmail.com>",
