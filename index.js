@@ -1,37 +1,41 @@
-import fetch from 'node-fetch';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import fetch from 'node-fetch';
 
 dotenv.config();
 
 const fetchCovidData = async () => {
   const url = 'https://www.coronavirus.in.gov/map/covid-19-indiana-universal-report-current-public.json';
 
-  const response = await fetch(url);
-  const json = await response.json();
+  try {
+    const response = await fetch(url);
+    const json = await response.json();
 
-  const {
-    county,
-    daily_delta_cases: newPositiveCases,
-    m3b_covid_positive_tests_adm_rate_moving_mean: positivityAllTests,
-    daily_delta_deaths: newDeaths,
-  } = json.metrics.daily_statistics;
+    const {
+      county,
+      daily_delta_cases: newPositiveCases,
+      m3b_covid_positive_test_valid_moving_mean: positivityAllTests,
+      daily_delta_deaths: newDeaths,
+    } = json.metrics.daily_statistics;
 
-  const johnsonCoIndex = county.findIndex((c) => c === 'Johnson');
+    const johnsonCoIndex = county.findIndex((c) => c === 'Johnson');
 
-  return {
-    indiana: {
-      // lets not modify the original array
-      newPositiveCases: String([...newPositiveCases].pop()),
-      positivityAllTests: [...positivityAllTests].pop().toFixed(1),
-      newDeaths: String([...newDeaths].pop()),
-    },
-    johnson: {
-      newPositiveCases: String(newPositiveCases[johnsonCoIndex]),
-      positivityAllTests: positivityAllTests[johnsonCoIndex].toFixed(1),
-      newDeaths: String(newDeaths[johnsonCoIndex]),
-    },
-  };
+    return {
+      indiana: {
+        // lets not modify the original array
+        newPositiveCases: String([...newPositiveCases].pop()),
+        positivityAllTests: String([...positivityAllTests].pop()),
+        newDeaths: String([...newDeaths].pop()),
+      },
+      johnson: {
+        newPositiveCases: String(newPositiveCases[johnsonCoIndex]),
+        positivityAllTests: String(positivityAllTests[johnsonCoIndex]),
+        newDeaths: String(newDeaths[johnsonCoIndex]),
+      },
+    };
+  } catch (err) {
+    throw new Error(err);
+  }
 };
 
 const sendEmailUpdate = async (data) => {
@@ -81,8 +85,12 @@ const sendEmailUpdate = async (data) => {
 };
 
 const main = async () => {
-  const results = await fetchCovidData();
-  sendEmailUpdate(results).catch(console.error);
+  try {
+    const results = await fetchCovidData();
+    await sendEmailUpdate(results);
+  } catch (err) {
+    console.error(err);
+  }
 };
 
 main();
